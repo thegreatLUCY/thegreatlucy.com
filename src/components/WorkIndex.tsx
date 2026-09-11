@@ -1438,9 +1438,11 @@ function IdeaMachine() {
             style={{ background: "#0a0a0c", boxShadow: "inset 0 2px 10px rgba(0,0,0,0.9)" }}
             aria-hidden
           >
-            <div className="flex w-max animate-marquee gap-8 whitespace-nowrap font-mono2 text-[10px] tracking-[0.2em]" style={{ color: "#e8b93e" }}>
-              {Array.from({ length: 4 }).map((_, i) => (
-                <span key={i}>★ FREE PLAY ★ EVERY PULL WINS ★ CLAIM ANYTHING ★ NO COINS NEEDED</span>
+            <div className="flex w-max animate-marquee whitespace-nowrap font-mono2 text-[10px] tracking-[0.2em]" style={{ color: "#e8b93e" }}>
+              {[0, 1].map((half) => (
+                <span key={half} className="pr-10">
+                  ★ FREE PLAY ★ EVERY PULL WINS ★ CLAIM ANYTHING ★ NO COINS NEEDED ★&nbsp;
+                </span>
               ))}
             </div>
           </div>
