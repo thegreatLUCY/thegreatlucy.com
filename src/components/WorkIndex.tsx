@@ -1074,7 +1074,13 @@ function IdeaMachine() {
   const mutedRef = useRef(false);
   const audio = useRef<AudioContext | null>(null);
   const y = useMotionValue(0);
-  const tilt = useTransform(y, [0, 150], [0, 6]);
+  // pivot-arm geometry: the ball rides an arc down toward the cabinet while the
+  // stick shortens (foreshortens) and leans, like a real lever rotating away.
+  const ballDrift = useTransform(y, [0, 190], [0, -16]);
+  const ballShrink = useTransform(y, [0, 190], [1, 0.85]);
+  const stickLen = useTransform(y, [0, 190], [251, 63]);
+  const stickAng = useTransform(y, [0, 190], [0, -15]);
+  const collarSpin = useTransform(y, [0, 190], [0, 70]);
   const cab = useAnimation();
   const dragged = useRef(false);
   const liveRef = useRef(false);
@@ -1181,9 +1187,9 @@ function IdeaMachine() {
     liveRef.current = true;
     tone(140, 0.09, "square", 0.06);
     cab.start({ x: [0, -3, 3, 0], transition: { duration: 0.28 } });
-    animate(y, 150, { duration: 0.1, ease: "easeIn" }).then(() => {
+    animate(y, 190, { duration: 0.12, ease: "easeIn" }).then(() => {
       spin();
-      window.setTimeout(() => animate(y, 0, { type: "spring", stiffness: 170, damping: 13 }), 240);
+      window.setTimeout(() => animate(y, 0, { type: "spring", stiffness: 200, damping: 13 }), 240);
     });
   };
 
@@ -1480,26 +1486,49 @@ function IdeaMachine() {
           </div>
         </div>
 
-        <div className="flex flex-col items-center gap-1.5 pt-6 shrink-0 select-none">
-          <div
-            className="relative flex-1 min-h-[210px] w-[72px] overflow-hidden rounded-full border border-white/10"
-            style={{ background: "linear-gradient(180deg, #0a0a0e, #1d1d24)", boxShadow: "inset 0 2px 6px rgba(0,0,0,0.9)" }}
-          >
+        <div className="flex flex-col items-center gap-1.5 pt-4 shrink-0 select-none">
+          <div className="relative h-[300px] w-[84px]">
+            {/* guide plate + the arc the ball travels */}
+            <div
+              className="absolute left-1/2 top-1 bottom-7 w-[24px] -translate-x-1/2 rounded-full border border-white/10"
+              style={{ background: "linear-gradient(180deg, #0a0a0e, #1d1d24)", boxShadow: "inset 0 2px 6px rgba(0,0,0,0.9)" }}
+            />
+            <svg className="absolute inset-0 h-full w-full" viewBox="0 0 84 300" fill="none" aria-hidden>
+              <path
+                d="M42 21 Q 22 110 26 211"
+                stroke="rgba(255,255,255,0.16)"
+                strokeWidth="5"
+                strokeLinecap="round"
+                strokeDasharray="1 10"
+              />
+            </svg>
+            {/* stick: anchored at the pivot, shortens + leans as the ball comes down */}
+            <motion.div
+              aria-hidden
+              style={{ height: stickLen, rotate: stickAng, transformOrigin: "50% 100%" }}
+              className="absolute left-1/2 bottom-[26px] -ml-[4px] w-[8px]"
+            >
+              <div
+                className="h-full w-full rounded-full"
+                style={{ background: "linear-gradient(90deg, #8a8a93, #e2e2e8 45%, #8a8a93)" }}
+              />
+            </motion.div>
+            {/* ball: drag it down the arc */}
             <motion.div
               drag="y"
-              dragConstraints={{ top: 0, bottom: 150 }}
-              dragElastic={0.06}
+              dragConstraints={{ top: 0, bottom: 190 }}
+              dragElastic={0.03}
               dragMomentum={false}
-              style={{ y, rotate: tilt, transformOrigin: "50% 0%" }}
+              style={{ y, x: ballDrift }}
               onDrag={(_, info) => {
                 if (Math.abs(info.offset.y) > 8) dragged.current = true;
                 if (spinning || liveRef.current) return;
-                if (y.get() >= 138) commitPull();
+                if (y.get() >= 176) commitPull();
               }}
               onDragEnd={() => {
                 if (liveRef.current) return;
-                if (!spinning && y.get() > 70) commitPull();
-                else animate(y, 0, { type: "spring", stiffness: 320, damping: 19 });
+                if (!spinning && y.get() > 90) commitPull();
+                else animate(y, 0, { type: "spring", stiffness: 280, damping: 12 });
               }}
               onClick={() => {
                 if (dragged.current) {
@@ -1517,33 +1546,40 @@ function IdeaMachine() {
                   commitPull();
                 }
               }}
-              className="absolute top-2 left-1/2 -ml-[17px] touch-none cursor-grab active:cursor-grabbing outline-none flex flex-col items-center"
+              className="absolute top-0 left-1/2 touch-none cursor-grab active:cursor-grabbing outline-none"
             >
-              <motion.span
-                className="block"
-                animate={pulls === 0 && !spinning ? { scale: [1, 1.18, 1] } : { scale: 1 }}
-                transition={pulls === 0 && !spinning ? { repeat: Infinity, duration: 1.1 } : { duration: 0.15 }}
-              >
-                <div
-                  className="w-[34px] h-[34px] rounded-full border-2 border-black/50"
-                  style={{
-                    background: "radial-gradient(circle at 35% 30%, #ff8a8a, #e02424 60%, #8e1a1a)",
-                    boxShadow:
-                      pulls === 0 && !spinning
-                        ? "0 0 14px 3px rgba(255,90,90,0.75)"
-                        : "0 4px 10px rgba(0,0,0,0.6)",
-                  }}
-                />
-              </motion.span>
-              <div
-                className="w-[8px] h-[300px] -mt-1 rounded-full"
-                style={{ background: "linear-gradient(180deg, #d7d7de, #8a8a93)" }}
-              />
+              <motion.div style={{ scale: ballShrink }} className="-ml-[21px]">
+                <motion.span
+                  className="block"
+                  animate={pulls === 0 && !spinning ? { scale: [1, 1.15, 1] } : { scale: 1 }}
+                  transition={pulls === 0 && !spinning ? { repeat: Infinity, duration: 1.1 } : { duration: 0.15 }}
+                >
+                  <div
+                    className="w-[42px] h-[42px] rounded-full border-2 border-black/50"
+                    style={{
+                      background: "radial-gradient(circle at 35% 30%, #ff8a8a, #e02424 60%, #8e1a1a)",
+                      boxShadow:
+                        pulls === 0 && !spinning
+                          ? "0 0 16px 4px rgba(255,90,90,0.75)"
+                          : "0 4px 10px rgba(0,0,0,0.6)",
+                    }}
+                  />
+                </motion.span>
+              </motion.div>
             </motion.div>
+            {/* pivot housing with a collar that visibly rotates with the pull */}
             <div
-              className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-[30px] h-[16px] rounded-full border border-white/15"
-              style={{ background: "linear-gradient(180deg, #3d3d48, #141419)" }}
-            />
+              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[56px] h-[30px] rounded-[10px] border border-white/15"
+              style={{ background: "linear-gradient(180deg, #3d3d48, #141419)", boxShadow: "0 3px 8px rgba(0,0,0,0.6)" }}
+            >
+              <motion.div
+                aria-hidden
+                style={{ rotate: collarSpin, background: "radial-gradient(circle at 35% 30%, #c9c9d2, #77777f 70%)" }}
+                className="absolute left-1/2 top-1/2 -ml-[11px] -mt-[11px] w-[22px] h-[22px] rounded-full border border-black/60"
+              >
+                <span className="absolute top-[2px] left-1/2 -ml-[2px] w-[4px] h-[4px] rounded-full bg-black/70" />
+              </motion.div>
+            </div>
           </div>
           <span className={`font-mono2 text-[9px] tracking-[0.2em] text-white/40 ${pulls === 0 && !spinning ? "animate-pulse" : ""}`}>PULL</span>
         </div>
