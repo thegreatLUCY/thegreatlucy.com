@@ -155,6 +155,8 @@ body {
   outline: 2px solid #0a66ff;
   outline-offset: 3px;
 }
+/* Tailwind v4 doesn't put a pointer on buttons — do it once, everywhere */
+button, summary, select, [role="button"] { cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }

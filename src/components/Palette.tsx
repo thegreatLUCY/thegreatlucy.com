@@ -40,12 +40,32 @@ export default function Palette() {
   }, []);
 
   useEffect(() => {
-    if (open) {
-      setQ("");
-      setSel(0);
-      setTimeout(() => inputRef.current?.focus(), 30);
-    }
+    if (!open) return;
+    setQ("");
+    setSel(0);
+    // autoFocus alone can lose to the mount animation — retry until it sticks
+    let raf = 0;
+    let tries = 0;
+    const focusIt = () => {
+      if (inputRef.current && document.activeElement !== inputRef.current) {
+        inputRef.current.focus({ preventScroll: true });
+      }
+      if (document.activeElement !== inputRef.current && ++tries < 10) {
+        raf = requestAnimationFrame(focusIt);
+      }
+    };
+    raf = requestAnimationFrame(focusIt);
+    return () => cancelAnimationFrame(raf);
   }, [open ]);
+
+  const listRef = useRef<HTMLUListElement>(null);
+
+  // keep the keyboard-selected row visible while arrowing
+  useEffect(() => {
+    listRef.current
+      ?.querySelector('[data-sel="1"]')
+      ?.scrollIntoView({ block: "nearest" });
+  }, [sel, q, open ]);
 
   const results = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -88,12 +108,20 @@ export default function Palette() {
             transition={{ duration: 0.18 }}
             className="w-full max-w-[480px] h-fit t-card border t-line rounded-2xl shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Site search"
           >
             <div className="flex items-center gap-2 px-4 border-b t-line">
               <span className="t-dim">⌕</span>
               <input
                 ref={inputRef}
+                autoFocus
                 value={q}
+                role="combobox"
+                aria-expanded="true"
+                aria-controls="palette-list"
+                aria-activedescendant={results[sel] ? `palette-opt-${sel}` : undefined}
                 onChange={(e) => { setQ(e.target.value); setSel(0); }}
                 onKeyDown={(e) => {
                   if (e.key === "ArrowDown") { e.preventDefault(); setSel((s) => Math.min(s + 1, results.length - 1)); }
@@ -105,13 +133,17 @@ export default function Palette() {
               />
               <span className="kbd">esc</span>
             </div>
-            <ul className="max-h-[300px] overflow-auto p-1.5">
+            <ul ref={listRef} id="palette-list" role="listbox" className="max-h-[300px] overflow-auto p-1.5">
               {results.length === 0 && (
                 <li className="px-3.5 py-3 text-[13.5px] t-dim">No results. The site is small on purpose.</li>
               )}
               {results.map((r, i) => (
                 <li key={r.label}>
                   <button
+                    id={`palette-opt-${i}`}
+                    role="option"
+                    aria-selected={sel === i}
+                    data-sel={sel === i ? "1" : "0"}
                     onMouseEnter={() => setSel(i)}
                     onClick={() => go(r.href)}
                     className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[14px] transition-colors ${
