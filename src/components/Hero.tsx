@@ -38,7 +38,7 @@ export default function Hero() {
             >
               L
             </motion.span>
-            Lucy · replies in 48h
+            Lucy · replies in 12h
           </span>
         </div>
 

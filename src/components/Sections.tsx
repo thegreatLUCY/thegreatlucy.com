@@ -75,7 +75,7 @@ export function Services() {
       {/* process strip */}
       <div className="mt-4 app-card px-5 py-4 grid sm:grid-cols-3 gap-3">
         {[
-          ["1 · Say hello", "One email. I reply in 48h with honest first thoughts — free."],
+          ["1 · Say hello", "One email. I reply in 12h with honest first thoughts — free."],
           ["2 · Small pilot", "A fixed-scope 1–2 week build, so we test working together cheaply."],
           ["3 · Ship & support", "Launch, docs, and me on call while it finds its people."],
         ].map(([t, d], i) => (
