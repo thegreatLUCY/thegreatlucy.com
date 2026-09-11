@@ -1079,10 +1079,26 @@ function IdeaMachine() {
   const dragged = useRef(false);
   const liveRef = useRef(false);
   const [landAt, setLandAt] = useState([0, 0, 0]);
+  // reel strips: 7 random words + final + 1 random, so the final lands centered
+  // on the middle row (the payline) when the strip stops with 3 rows visible.
+  const ROW_H = 52;
+  const STOP_MS = [550, 950, 1400];
+  const buildStrip = (pool: string[], fin: string) => [
+    ...Array.from({ length: 7 }, () => pick(pool)),
+    fin,
+    pick(pool),
+  ];
+  const [strips, setStrips] = useState<string[][]>(() => [
+    [pick(WHO), WHO[0], pick(WHO)],
+    [pick(WANT), WANT[2], pick(WANT)],
+    [pick(TWIST), TWIST[7], pick(TWIST)],
+  ]);
+  const [spinId, setSpinId] = useState(0);
+  const [stopped, setStopped] = useState([true, true, true]);
 
   mutedRef.current = muted;
 
-  const beep = (freq = 660, dur = 0.05) => {
+  const tone = (freq: number, dur = 0.05, type: OscillatorType = "square", vol = 0.03, slideTo?: number) => {
     if (mutedRef.current) return;
     try {
       audio.current ??= new (window.AudioContext ||
@@ -1091,15 +1107,28 @@ function IdeaMachine() {
       if (ctx.state === "suspended") void ctx.resume();
       const o = ctx.createOscillator();
       const g = ctx.createGain();
-      o.type = "square";
-      o.frequency.value = freq;
-      g.gain.setValueAtTime(0.035, ctx.currentTime);
+      o.type = type;
+      o.frequency.setValueAtTime(freq, ctx.currentTime);
+      if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, ctx.currentTime + dur);
+      g.gain.setValueAtTime(vol, ctx.currentTime);
       g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
       o.connect(g);
       g.connect(ctx.destination);
       o.start();
       o.stop(ctx.currentTime + dur + 0.02);
     } catch {}
+  };
+  // ratchet clicks while the strips fly, a thunk per reel stop, sweep on fire, fanfare on jackpot
+  const click = () => tone(2200 + Math.random() * 600, 0.018, "square", 0.008);
+  const thud = () => {
+    tone(130, 0.1, "sine", 0.1);
+    tone(72, 0.14, "triangle", 0.08);
+  };
+  const whirr = () => tone(180, 0.3, "sawtooth", 0.02, 720);
+  const fanfare = () => {
+    [523, 659, 784, 1046].forEach((f, i) =>
+      timers.current.push(window.setTimeout(() => tone(f, 0.12, "triangle", 0.05), i * 90))
+    );
   };
 
   const refill = async () => {
@@ -1150,7 +1179,7 @@ function IdeaMachine() {
   const commitPull = () => {
     if (liveRef.current || spinning) return;
     liveRef.current = true;
-    beep(150, 0.14);
+    tone(140, 0.09, "square", 0.06);
     cab.start({ x: [0, -3, 3, 0], transition: { duration: 0.28 } });
     animate(y, 150, { duration: 0.1, ease: "easeIn" }).then(() => {
       spin();
@@ -1160,8 +1189,6 @@ function IdeaMachine() {
 
   const spin = () => {
     if (spinning) return;
-    setSpinning(true);
-    beep(440, 0.06);
     const landing = queueRef.current[0] ?? null;
     if (landing) {
       queueRef.current = queueRef.current.slice(1);
@@ -1169,18 +1196,30 @@ function IdeaMachine() {
     }
     setLandedAi(!!landing);
     if (queueRef.current.length < 2) void refill();
-    const tick = window.setInterval(() => {
-      setCombo({ who: pick(WHO), want: pick(WANT), twist: pick(TWIST) });
-    }, 80);
-    ([["who", 550], ["want", 950], ["twist", 1400]] as ["who" | "want" | "twist", number][]).forEach(
-      ([key, at], i) =>
+    // finals are decided up front so each strip can be built around its landing word
+    const finals: [string, string, string] = [
+      landing?.who ?? pick(WHO),
+      landing?.want ?? pick(WANT),
+      landing?.twist ?? pick(TWIST),
+    ];
+    landRef.current = { who: finals[0], want: finals[1], twist: finals[2] };
+    setStrips([buildStrip(WHO, finals[0]), buildStrip(WANT, finals[1]), buildStrip(TWIST, finals[2])]);
+    setStopped([false, false, false]);
+    setSpinId((s) => s + 1);
+    setSpinning(true);
+    whirr();
+    const tick = window.setInterval(click, 70);
+    (["who", "want", "twist"] as ("who" | "want" | "twist")[]).forEach((key, i) =>
         timers.current.push(
           window.setTimeout(() => {
-            const pool = key === "who" ? WHO : key === "want" ? WANT : TWIST;
-            const word = landing ? landing[key] : pick(pool);
-            landRef.current = { ...landRef.current, [key]: word };
+            const word = finals[i];
             setCombo((c) => ({ ...c, [key]: word }));
-            beep(620 + i * 160, 0.05);
+            thud();
+            setStopped((s) => {
+              const n = [...s];
+              n[i] = true;
+              return n;
+            });
             setLandAt((l) => {
               const n = [...l];
               n[i] = Date.now();
@@ -1192,9 +1231,8 @@ function IdeaMachine() {
               liveRef.current = false;
               if (landing) {
                 setWin(true);
-                beep(880, 0.07);
-                timers.current.push(window.setTimeout(() => beep(1174, 0.1), 110));
-                timers.current.push(window.setTimeout(() => setWin(false), 950));
+                fanfare();
+                timers.current.push(window.setTimeout(() => setWin(false), 1100));
               }
               setHistory((h) => {
                 const n = [{ t: { ...landRef.current }, ai: !!landing }, ...h].slice(0, 4);
@@ -1211,19 +1249,13 @@ function IdeaMachine() {
                 return n;
               });
             }
-          }, at)
+          }, STOP_MS[i])
         )
     );
   };
 
   const idea = cap(`${combo.want} for ${combo.who} — ${combo.twist}.`);
   const mailto = `mailto:hello@thegreatlucy.com?subject=${encodeURIComponent(`Idea claim: ${idea}`)}&body=${encodeURIComponent(`Hi Lucy — I pulled this from your idea machine:\n\n"${idea}"\n\nLet's build it.`)}`;
-
-  const reels: [string, string][] = [
-    ["Who", combo.who],
-    ["Want", combo.want],
-    ["Twist", combo.twist],
-  ];
 
   return (
     <div className="flex flex-col gap-3 min-w-0 flex-1 h-full">
@@ -1274,33 +1306,92 @@ function IdeaMachine() {
             ))}
           </div>
 
-          <div className="mt-2.5 grid grid-cols-3 gap-1.5">
-            {reels.map(([label, word], ri) => (
-              <motion.div
-                key={`${label}-${landAt[ri]}`}
-                initial={{ scale: 0.93 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 480, damping: 17 }}
-                className="rounded-xl px-1 py-2 text-center overflow-hidden border border-white/10"
-                style={{
-                  background: "linear-gradient(180deg, #0a0a0e, #17171e 50%, #0a0a0e)",
-                  boxShadow: "inset 0 2px 8px rgba(0,0,0,0.8)",
-                }}
-              >
-                <p className="font-mono2 text-[9px] tracking-[0.2em] text-white/40">{label}</p>
-                <div className="h-[64px] grid place-items-center overflow-hidden">
-                  <motion.p
-                    key={word}
-                    initial={{ y: 16, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ duration: 0.13 }}
-                    className={`text-[15px] font-bold leading-tight text-[#f5f2e8] ${spinning ? "blur-[0.7px]" : ""}`}
-                  >
-                    {word}
-                  </motion.p>
-                </div>
-              </motion.div>
+          <div className="mt-2.5 grid grid-cols-3 gap-1.5 px-1" aria-hidden>
+            {["Who", "Want", "Twist"].map((label) => (
+              <p key={label} className="font-mono2 text-[9px] tracking-[0.2em] text-white/40 text-center">
+                {label}
+              </p>
             ))}
+          </div>
+          <div className="relative mt-1">
+            <div className="grid grid-cols-3 gap-1.5">
+              {strips.map((items, ri) => {
+                const target = -(items.length - 3) * ROW_H;
+                const rolling = spinning && !stopped[ri];
+                return (
+                  <motion.div
+                    key={`${ri}-${landAt[ri]}`}
+                    initial={{ scale: 0.96 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 480, damping: 15 }}
+                    className="rounded-xl overflow-hidden border border-white/10 relative"
+                    style={{
+                      background: "linear-gradient(180deg, #0a0a0e, #17171e 50%, #0a0a0e)",
+                      boxShadow: "inset 0 2px 8px rgba(0,0,0,0.8)",
+                    }}
+                  >
+                    <div className="overflow-hidden" style={{ height: ROW_H * 3 }}>
+                      <motion.div
+                        key={spinId}
+                        initial={{ y: 0 }}
+                        animate={spinId === 0 ? { y: 0 } : { y: [0, target - 16, target] }}
+                        transition={
+                          spinId === 0
+                            ? { duration: 0 }
+                            : { duration: STOP_MS[ri] / 1000, times: [0, 0.88, 1], ease: "easeOut" }
+                        }
+                      >
+                        {items.map((w, i) => (
+                          <div
+                            key={i}
+                            className="grid place-items-center px-1.5 overflow-hidden"
+                            style={{ height: ROW_H }}
+                          >
+                            <p
+                              className={`text-[12px] font-bold leading-[1.15] text-center text-[#f5f2e8] ${
+                                rolling ? "blur-[1.5px]" : ""
+                              }`}
+                            >
+                              {w}
+                            </p>
+                          </div>
+                        ))}
+                      </motion.div>
+                    </div>
+                    {/* depth shading top/bottom */}
+                    <div
+                      aria-hidden
+                      className="pointer-events-none absolute inset-x-0 top-0 h-7"
+                      style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.55), transparent)" }}
+                    />
+                    <div
+                      aria-hidden
+                      className="pointer-events-none absolute inset-x-0 bottom-0 h-7"
+                      style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.55), transparent)" }}
+                    />
+                  </motion.div>
+                );
+              })}
+            </div>
+            {/* payline */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-x-[-5px] top-1/2 -translate-y-1/2 flex items-center gap-1"
+            >
+              <span className="text-[10px]" style={{ color: "#ffd84d", textShadow: "0 0 6px rgba(255,216,77,0.8)" }}>
+                ◀
+              </span>
+              <div
+                className="h-[2px] flex-1"
+                style={{
+                  background: "linear-gradient(90deg, transparent, #ffd84d, transparent)",
+                  boxShadow: "0 0 6px rgba(255,216,77,0.7)",
+                }}
+              />
+              <span className="text-[10px]" style={{ color: "#ffd84d", textShadow: "0 0 6px rgba(255,216,77,0.8)" }}>
+                ▶
+              </span>
+            </div>
           </div>
 
           <div
