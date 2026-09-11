@@ -20,6 +20,20 @@ export const metadata: Metadata = {
   description:
     "Lucy builds AI products and apps: Tenawar invitations, Bubble Trouble game, Chrome extensions, open-source lab.",
   metadataBase: new URL("https://thegreatlucy.com"),
+  openGraph: {
+    title: "thegreatLucy — small software, shipped",
+    description:
+      "AI products, playful apps, and open-source toys — with live demos. Bring the idea, get the shipped version.",
+    url: "https://thegreatlucy.com",
+    siteName: "thegreatLucy",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "thegreatLucy — small software, shipped",
+    description:
+      "AI products, playful apps, and open-source toys — with live demos.",
+  },
 };
 
 const themeInit = `(function(){try{var m=localStorage.getItem('lucy-theme')||'system';var d=m==='system'?window.matchMedia('(prefers-color-scheme: dark)').matches:m==='dark';if(d)document.documentElement.classList.add('dark')}catch(e){}})();`;
