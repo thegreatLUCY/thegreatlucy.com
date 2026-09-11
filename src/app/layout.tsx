@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter_Tight, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/Theme";
@@ -34,6 +34,13 @@ export const metadata: Metadata = {
     description:
       "AI products, playful apps, and open-source toys — with live demos.",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f4f4f2" },
+    { media: "(prefers-color-scheme: dark)", color: "#101012" },
+  ],
 };
 
 const themeInit = `(function(){try{var m=localStorage.getItem('lucy-theme')||'system';var d=m==='system'?window.matchMedia('(prefers-color-scheme: dark)').matches:m==='dark';if(d)document.documentElement.classList.add('dark')}catch(e){}})();`;

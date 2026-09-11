@@ -372,6 +372,7 @@ function GameBlock() {
           title={`Bubble Trouble playable — world ${world}`}
           className="block w-full flex-1 min-h-[420px]"
           scrolling="no"
+          loading="lazy"
         />
       </div>
       <p className="font-mono2 text-[10.5px] t-dim text-center">
