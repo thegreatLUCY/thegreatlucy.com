@@ -17,13 +17,14 @@ export function IconTenawar({ size = 40 }: { size?: number }) {
 
 export function IconGame({ size = 40 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden>
-      <rect width="64" height="64" rx="15" fill="#161616" />
-      <circle cx="24" cy="26" r="9" fill="none" stroke="#7DD8FF" strokeWidth="2.5" />
-      <circle cx="41" cy="22" r="5.5" fill="none" stroke="#7DD8FF" strokeWidth="2.5" />
-      <circle cx="44" cy="42" r="7.5" fill="none" stroke="#E8B93E" strokeWidth="2.5" />
-      <circle cx="26" cy="45" r="4" fill="#FF6B4A" />
-    </svg>
+    <img
+      src="/bubble-trouble.png"
+      alt=""
+      aria-hidden
+      width={size}
+      height={size}
+      style={{ width: size, height: size, borderRadius: size * 0.24 }}
+    />
   );
 }
 
