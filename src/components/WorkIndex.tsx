@@ -228,8 +228,16 @@ function RsvpBlock() {
         dir={lang === "ar" ? "rtl" : "ltr"}
       >
         {theme === "sahel" && (
-          <div className="mx-auto mb-3 w-16 h-20 rounded-t-full border-2" style={{ borderColor: st.accent }} aria-hidden>
-            <div className="mx-auto mt-3 w-3 h-3 rounded-full" style={{ background: st.accent }} />
+          <div
+            className="mx-auto mb-3 w-24 h-28 rounded-t-full overflow-hidden border-2"
+            style={{ borderColor: st.accent, boxShadow: "0 8px 24px -12px rgba(0,0,0,0.4)" }}
+          >
+            <img
+              src="/sahel-couple.png"
+              alt="Couple at sunset by the sea"
+              loading="lazy"
+              className="w-full h-full object-cover"
+            />
           </div>
         )}
         {theme === "layl" && (
