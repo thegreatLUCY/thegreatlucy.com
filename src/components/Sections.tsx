@@ -30,7 +30,7 @@ const SERVICES: { title: string; desc: string; includes: string[]; subject: stri
 
 export function Services() {
   return (
-    <section id="services" className="max-w-[1024px] mx-auto px-5 pt-10 scroll-mt-16">
+    <section id="services" className="max-w-[1200px] mx-auto px-5 pt-10 scroll-mt-16">
       <motion.div
         initial={{ opacity: 0, y: 14 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -114,7 +114,7 @@ export function Contact() {
   };
 
   return (
-    <section id="contact" className="max-w-[1024px] mx-auto px-5 pt-10 scroll-mt-16">
+    <section id="contact" className="max-w-[1200px] mx-auto px-5 pt-10 scroll-mt-16">
       <motion.div
         initial={{ opacity: 0, y: 18 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -217,7 +217,7 @@ export function Contact() {
 
 export function Footer() {
   return (
-    <footer className="max-w-[1024px] mx-auto px-5 pt-8 pb-10">
+    <footer className="max-w-[1200px] mx-auto px-5 pt-8 pb-10">
       <div className="border-t t-line pt-5 flex flex-col sm:flex-row justify-between gap-1.5 font-mono2 text-[10.5px] tracking-[0.1em] uppercase t-dim">
         <span>© 2026 thegreatLucy</span>
         <span>Made with care · <a href="#top" className="t-ink hover:opacity-60">Back to top ↑</a></span>

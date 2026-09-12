@@ -70,9 +70,9 @@ export function MenuBar() {
 
   return (
     <div className="sticky top-0 z-40 t-bg/85 backdrop-blur border-b t-line">
-      <div className="max-w-[1024px] mx-auto px-5 h-12 flex items-center justify-between text-[13px] gap-2">
+      <div className="max-w-[1200px] mx-auto px-5 h-12 flex items-center justify-between text-[13px] gap-2">
         <button onClick={logoEgg} className="flex items-center gap-2 font-bold tracking-tight t-ink">
-          <span className="w-6 h-6 rounded-[7px] bg-[#161616] dark:bg-white text-white dark:text-[#161616] grid place-items-center text-[13px] font-extrabold">L</span>
+          <img src="/lucy.png" alt="" aria-hidden width={24} height={24} className="w-6 h-6 rounded-[7px] object-cover" />
           thegreatLucy
         </button>
         <nav className="hidden sm:flex items-center gap-5 t-ink">
@@ -81,12 +81,6 @@ export function MenuBar() {
           <a href="#contact" className="hover:opacity-55 transition-opacity">Contact</a>
         </nav>
         <div className="flex items-center gap-2.5">
-          <button
-            onClick={() => window.dispatchEvent(new Event("lucy:palette"))}
-            className="hidden sm:flex items-center gap-1.5 text-[12px] t-dim border t-line t-card rounded-full px-3 py-1.5 hover:t-ink transition-colors"
-          >
-            Jump to <span className="kbd">⌘K</span>
-          </button>
           <ThemeToggle />
         </div>
       </div>

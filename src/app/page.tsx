@@ -4,7 +4,7 @@ import { MenuBar } from "@/components/Invitation";
 import Hero from "@/components/Hero";
 import Blocks from "@/components/WorkIndex";
 import { Services, Contact, Footer } from "@/components/Sections";
-import Palette from "@/components/Palette";
+import Rails from "@/components/Rails";
 import { ToastHost, ConfettiHost, useKonami } from "@/components/Eggs";
 
 export default function Home() {
@@ -19,7 +19,7 @@ export default function Home() {
         <Contact />
         <Footer />
       </main>
-      <Palette />
+      <Rails />
       <ToastHost />
       <ConfettiHost />
     </div>

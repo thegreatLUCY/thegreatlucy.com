@@ -1676,7 +1676,7 @@ function IdeaMachine() {
 
 export default function Blocks() {
   return (
-    <section id="apps" className="max-w-[1024px] mx-auto px-5 pt-2 pb-2 scroll-mt-16">
+    <section id="apps" className="max-w-[1200px] mx-auto px-5 pt-2 pb-2 scroll-mt-16">
       <div className="grid md:grid-cols-2 gap-4">
         <Block id="app-tenawar" index="01 / invitations" icon={<IconTenawar />} name="Tenawar" tagline="Digital invites with RSVP — try one" href="https://tenawar.com" cta="Open site" ask="Need bookings, invites, or RSVP flows?" askHref="mailto:hello@thegreatlucy.com?subject=Invite%20or%20booking%20flow%20%E2%80%94%20let%27s%20talk" i={0}>
           <RsvpBlock />

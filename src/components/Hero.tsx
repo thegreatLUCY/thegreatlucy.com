@@ -19,38 +19,42 @@ export { EMAIL };
 export default function Hero() {
 
   return (
-    <section id="top" className="max-w-[1024px] mx-auto px-5 pt-10 sm:pt-14 pb-6">
+    <section id="top" className="max-w-[1200px] mx-auto px-5 pt-10 sm:pt-14 pb-6">
       <motion.div
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
       >
         <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-2 text-[12px] font-semibold t-chip border t-line rounded-full px-3 py-1.5">
-            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            Open for new projects
-          </span>
-          <span className="inline-flex items-center gap-2 text-[12px] t-dim font-medium">
+          <div className="flex items-center gap-3.5">
             <motion.span
-              className="block w-10 h-10 rounded-full overflow-hidden ring-1 t-line"
+              className="block w-16 h-16 rounded-full overflow-hidden ring-2 ring-[#0a66ff]/40 shadow-lg"
               whileHover={{ rotate: -8, scale: 1.06 }}
               transition={{ type: "spring", stiffness: 350, damping: 14 }}
             >
-              <img src="/lucy.png" alt="Lucy" width={40} height={40} className="w-full h-full object-cover" />
+              <img src="/lucy.png" alt="Lucy's profile photo" width={64} height={64} className="w-full h-full object-cover" />
             </motion.span>
-            Lucy · replies in 12h
-            <a
-              href="https://x.com/psychedelicflyn"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Lucy on X"
-              className="grid place-items-center w-7 h-7 rounded-full border t-line t-dim hover:text-[#0a66ff] hover:border-[#0a66ff] transition-colors"
-            >
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5" aria-hidden>
-                <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
-              </svg>
-            </a>
-          </span>
+            <div>
+              <p className="text-[19px] font-extrabold tracking-tight flex items-center gap-2">
+                Lucy
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-green-700 dark:text-green-400 bg-green-500/10 rounded-full px-2.5 py-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                  Open for projects
+                </span>
+              </p>
+              <p className="text-[13.5px] t-dim font-medium mt-1">
+                replies in 12h ·{" "}
+                <a
+                  href="https://x.com/psychedelicflyn"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-bold text-[#0a66ff] hover:underline underline-offset-4"
+                >
+                  @psychedelicflyn
+                </a>
+              </p>
+            </div>
+          </div>
         </div>
 
         <h1 className="mt-4 text-[34px] sm:text-[54px] leading-[1.02] tracking-[-0.035em] font-extrabold max-w-[760px]">
