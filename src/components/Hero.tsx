@@ -32,13 +32,24 @@ export default function Hero() {
           </span>
           <span className="inline-flex items-center gap-2 text-[12px] t-dim font-medium">
             <motion.span
-              className="w-10 h-10 rounded-full bg-[#161616] dark:bg-white text-white dark:text-[#161616] grid place-items-center text-[17px] font-extrabold"
+              className="block w-10 h-10 rounded-full overflow-hidden ring-1 t-line"
               whileHover={{ rotate: -8, scale: 1.06 }}
               transition={{ type: "spring", stiffness: 350, damping: 14 }}
             >
-              L
+              <img src="/lucy.png" alt="Lucy" width={40} height={40} className="w-full h-full object-cover" />
             </motion.span>
             Lucy · replies in 12h
+            <a
+              href="https://x.com/psychedelicflyn"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Lucy on X"
+              className="grid place-items-center w-7 h-7 rounded-full border t-line t-dim hover:text-[#0a66ff] hover:border-[#0a66ff] transition-colors"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5" aria-hidden>
+                <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
+              </svg>
+            </a>
           </span>
         </div>
 

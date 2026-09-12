@@ -151,6 +151,7 @@ export function Contact() {
           <div className="mt-5 flex flex-wrap gap-x-5 gap-y-1.5 text-[13px]">
             {[
               ["GitHub", "https://github.com/thegreatLucy"],
+              ["X", "https://x.com/psychedelicflyn"],
               ["Tenawar", "https://tenawar.com"],
               ["Play Store", "https://play.google.com/store/apps/details?id=com.chickenspace.bubbletrouble&pcampaignid=web_share"],
               ["Chrome Store", "https://chromewebstore.google.com/search/ThegreaLucy"],
