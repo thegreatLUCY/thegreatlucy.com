@@ -30,7 +30,10 @@ export async function POST() {
         model: MODEL,
         temperature: 0.8,
         response_format: { type: "json_object" },
-        max_tokens: 500,
+        // reasoning model: keep reasoning short or it eats the whole budget
+        // and returns empty JSON (400). 1500 fits low-effort reasoning + 6 triples.
+        reasoning_effort: "low",
+        max_tokens: 1500,
         messages: [
           { role: "system", content: SYSTEM },
           { role: "user", content: "Deal 6 idea triples." },
