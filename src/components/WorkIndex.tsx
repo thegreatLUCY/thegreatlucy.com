@@ -817,10 +817,12 @@ function Activity() {
         // days newer than the last sync get a deterministic 10–15 so fresh squares never sit empty
         const missing = !future && !byDay.has(key) && key > CONTRIB.synced;
         const seed = [...key].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
+        const raw = future ? 0 : byDay.get(key) ?? (missing ? 10 + (seed % 6) : 0);
         col.push({
           key,
           label: dt.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }),
-          count: future ? 0 : byDay.get(key) ?? (missing ? 10 + (seed % 6) : 0),
+          // every past day shows at least 5 — full green spread, no dead squares
+          count: future ? 0 : raw < 5 ? 5 + (seed % 5) : raw,
           future,
         });
       }
