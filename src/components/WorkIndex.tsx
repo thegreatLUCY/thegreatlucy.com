@@ -1084,6 +1084,10 @@ function IdeaMachine() {
   const cab = useAnimation();
   const dragged = useRef(false);
   const liveRef = useRef(false);
+  // holding: finger still on the ball. needsReturn: released mid-spin, so the
+  // lever must snap back when the spin finishes instead of sticking down.
+  const holding = useRef(false);
+  const needsReturn = useRef(false);
   const [landAt, setLandAt] = useState([0, 0, 0]);
   // reel strips: 7 random words + final + 1 random, so the final lands centered
   // on the middle row (the payline) when the strip stops with 3 rows visible.
@@ -1189,7 +1193,10 @@ function IdeaMachine() {
     cab.start({ x: [0, -3, 3, 0], transition: { duration: 0.28 } });
     animate(y, 190, { duration: 0.12, ease: "easeIn" }).then(() => {
       spin();
-      window.setTimeout(() => animate(y, 0, { type: "spring", stiffness: 200, damping: 13 }), 240);
+      // only auto-return if the finger is already off — a held ball returns on release.
+      window.setTimeout(() => {
+        if (!holding.current) animate(y, 0, { type: "spring", stiffness: 200, damping: 13 });
+      }, 240);
     });
   };
 
@@ -1235,6 +1242,10 @@ function IdeaMachine() {
               clearInterval(tick);
               setSpinning(false);
               liveRef.current = false;
+              if (needsReturn.current) {
+                needsReturn.current = false;
+                animate(y, 0, { type: "spring", stiffness: 280, damping: 12 });
+              }
               if (landing) {
                 setWin(true);
                 fanfare();
@@ -1522,14 +1533,21 @@ function IdeaMachine() {
               dragElastic={0.03}
               dragMomentum={false}
               style={{ y, x: ballDrift }}
+              onDragStart={() => {
+                holding.current = true;
+              }}
               onDrag={(_, info) => {
                 if (Math.abs(info.offset.y) > 8) dragged.current = true;
                 if (spinning || liveRef.current) return;
                 if (y.get() >= 176) commitPull();
               }}
               onDragEnd={() => {
-                if (liveRef.current) return;
-                if (!spinning && y.get() > 90) commitPull();
+                holding.current = false;
+                if (liveRef.current || spinning) {
+                  needsReturn.current = true;
+                  return;
+                }
+                if (y.get() > 90) commitPull();
                 else animate(y, 0, { type: "spring", stiffness: 280, damping: 12 });
               }}
               onClick={() => {
