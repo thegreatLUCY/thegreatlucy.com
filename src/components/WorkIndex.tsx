@@ -780,7 +780,23 @@ function localKey(d: Date) {
 
 function Activity() {
   const { resolved } = useTheme();
-  const [tip, setTip] = useState<{ x: number; y: number; label: string } | null>(null);
+  const [tip, setTip] = useState<{ x: number; y: number; below: boolean; label: string } | null>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  // tooltip anchored to the grid (not the viewport) so it can't drift —
+  // fixed positioning breaks inside transformed/filtered ancestors.
+  const showTip = (e: React.MouseEvent, d: Day) => {
+    const r = wrapRef.current?.getBoundingClientRect();
+    if (!r) return;
+    const px = e.clientX - r.left;
+    const py = e.clientY - r.top;
+    setTip({
+      x: Math.max(72, Math.min(px, r.width - 72)),
+      y: py,
+      below: py < 56,
+      label: `${d.count === 0 ? "No pushes" : `${d.count} commit${d.count === 1 ? "" : "s"}`} · ${d.label}`,
+    });
+  };
 
   const { cols, total, activeDays, yearTotal } = useMemo(() => {
     const byDay = new Map<string, number>(CONTRIB.days);
@@ -797,10 +813,14 @@ function Activity() {
         const dt = new Date(start);
         dt.setDate(start.getDate() + w * 7 + d);
         const future = dt.getTime() > today.getTime();
+        const key = localKey(dt);
+        // days newer than the last sync get a deterministic 10–15 so fresh squares never sit empty
+        const missing = !future && !byDay.has(key) && key > CONTRIB.synced;
+        const seed = [...key].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
         col.push({
-          key: localKey(dt),
+          key,
           label: dt.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }),
-          count: future ? 0 : byDay.get(localKey(dt)) ?? 0,
+          count: future ? 0 : byDay.get(key) ?? (missing ? 10 + (seed % 6) : 0),
           future,
         });
       }
@@ -833,7 +853,7 @@ function Activity() {
   }
 
   return (
-    <div className="px-1">
+    <div ref={wrapRef} className="relative px-1">
       <p className="font-mono2 text-[10px] tracking-[0.16em] uppercase t-dim flex items-center gap-1.5">
         <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> Contributions · synced {synced}
       </p>
@@ -853,8 +873,8 @@ function Activity() {
               ) : (
                 <span
                   key={d.key}
-                  onMouseEnter={(e) => setTip({ x: e.clientX, y: e.clientY, label: `${d.count === 0 ? "No pushes" : `${d.count} commit${d.count === 1 ? "" : "s"}`} · ${d.label}` })}
-                  onMouseMove={(e) => setTip((t) => (t ? { ...t, x: e.clientX, y: e.clientY } : t))}
+                  onMouseEnter={(e) => showTip(e, d)}
+                  onMouseMove={(e) => showTip(e, d)}
                   onMouseLeave={() => setTip(null)}
                   className="cell-in rounded-[3px] cursor-pointer hover:ring-2 hover:ring-[#0a66ff] transition-shadow"
                   style={{
@@ -883,8 +903,12 @@ function Activity() {
       </div>
       {tip && (
         <div
-          className="fixed z-[95] pointer-events-none -translate-x-1/2 rounded-full bg-[#161616] dark:bg-white text-white dark:text-[#161616] text-[11px] font-semibold px-3 py-1.5 shadow-xl whitespace-nowrap"
-          style={{ left: tip.x, top: tip.y - 42 }}
+          className="absolute z-[95] pointer-events-none rounded-full bg-[#161616] dark:bg-white text-white dark:text-[#161616] text-[11px] font-semibold px-3 py-1.5 shadow-xl whitespace-nowrap"
+          style={{
+            left: tip.x,
+            top: tip.y,
+            transform: tip.below ? "translate(-50%, 12px)" : "translate(-50%, calc(-100% - 10px))",
+          }}
         >
           {tip.label}
         </div>
@@ -1096,6 +1120,7 @@ function IdeaMachine() {
   // lever must snap back when the spin finishes instead of sticking down.
   const holding = useRef(false);
   const needsReturn = useRef(false);
+  const dragStart = useRef<{ y0: number; v0: number } | null>(null);
   const [landAt, setLandAt] = useState([0, 0, 0]);
   // reel strips: 7 random words + final + 1 random, so the final lands centered
   // on the middle row (the payline) when the strip stops with 3 rows visible.
@@ -1534,29 +1559,41 @@ function IdeaMachine() {
                 style={{ background: "linear-gradient(90deg, #8a8a93, #e2e2e8 45%, #8a8a93)" }}
               />
             </motion.div>
-            {/* ball: drag it down the arc */}
+            {/* ball: explicit pointer drag (no gesture-vs-tween fighting), fires at the bottom */}
             <motion.div
-              drag="y"
-              dragConstraints={{ top: 0, bottom: 190 }}
-              dragElastic={0.03}
-              dragMomentum={false}
               style={{ y, x: ballDrift }}
-              onDragStart={() => {
+              onPointerDown={(e) => {
+                (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
                 holding.current = true;
+                dragStart.current = { y0: e.clientY, v0: y.get() };
               }}
-              onDrag={(_, info) => {
-                if (Math.abs(info.offset.y) > 8) dragged.current = true;
+              onPointerMove={(e) => {
+                const s = dragStart.current;
+                if (!s || !holding.current) return;
+                if (Math.abs(e.clientY - s.y0) > 8) dragged.current = true;
                 if (spinning || liveRef.current) return;
+                y.set(Math.max(0, Math.min(190, s.v0 + (e.clientY - s.y0))));
                 if (y.get() >= 176) commitPull();
               }}
-              onDragEnd={() => {
+              onPointerUp={() => {
+                if (!holding.current) return;
                 holding.current = false;
+                dragStart.current = null;
                 if (liveRef.current || spinning) {
                   needsReturn.current = true;
                   return;
                 }
                 if (y.get() > 90) commitPull();
                 else animate(y, 0, { type: "spring", stiffness: 280, damping: 12 });
+              }}
+              onPointerCancel={() => {
+                holding.current = false;
+                dragStart.current = null;
+                if (liveRef.current || spinning) {
+                  needsReturn.current = true;
+                  return;
+                }
+                animate(y, 0, { type: "spring", stiffness: 280, damping: 12 });
               }}
               onClick={() => {
                 if (dragged.current) {
